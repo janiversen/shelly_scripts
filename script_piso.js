@@ -1,13 +1,14 @@
 // Scripts for piso.
 
 let CONFIG = {
-  location: 0,  // SALON: entrada 0, dormitorio 1, DORMITORIO: 2 entrada, 3 belen, 4 jan
+  location: 0,  // 0 = Salon, 1 = Dormitorio
   base_ip: "http://192.168.20.",
   blinds: ["132", "135", "129"],
+  blinds_partial: "30",
+  belen: 0,  // Special belen cama
+  leds: ["125", "126"],
   ventilator: "131",
   cama: "142",
-  blinds_partial: "30",
-  leds: ["125", "125", "126", "126", "126"],
   led_cycles: [["40", "50"], ["100", "100"], ["1", "20"]],
 };
 let cur_cycle = 0;
@@ -78,15 +79,19 @@ function light_onoff(ip) {
 Shelly.addEventHandler(
   function (event, user_data) {
     if (event.name === "input") {
+      if (CONFIG.belen) {
+        let new_id = [2, 3, 0, 1];
+        event.id = new_id[event.id];
+      }
       if (event.info.event === "single_push") {
         if (event.id === 0) { // our 3
-          if (CONFIG.location === 2) {
+          if (CONFIG.location) {
             light_onoff(CONFIG.cama);
           } else {
             print("Reserve single 3");
           }
         } else if (event.id === 1) { // our 4
-          if (CONFIG.location === 2) {
+          if (CONFIG.location) {
             light_onoff(CONFIG.ventilator);
           } else {
             print("Reserve single 4");
