@@ -3,12 +3,12 @@
 let CONFIG = {
   location: 0,  // 0 = Salon, 1 = Dormitorio
   base_ip: "http://192.168.20.",
-  blinds: ["115", "113", "105"],
+  blinds: ["132", "135", "129"],
   blinds_partial: "30",
   belen: 0,  // Special belen cama
-  leds: ["117", "107"],
-  ventilator: "104",
-  cama: "108",
+  leds: ["125", "126"],
+  ventilator: "131",
+  cama: "142",
   led_cycles: [["40", "50"], ["100", "100"], ["1", "20"]],
 };
 let cur_cycle = 0;
