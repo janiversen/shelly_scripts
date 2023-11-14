@@ -15,10 +15,6 @@ Salon entrada y dormitorio:
 |  Apagar todo luz  |     |         Apagar todo Luz           |
 +-------+-----------+     +----------------+------------------+
 
-Events entrada:    0 - 1 - 2 - 3
-Events dormitorio: 1 - 0 - 3 - 2
-
-
 
 Dormitorio entrada:
 
@@ -27,7 +23,3 @@ Dormitorio entrada:
 +------------+-----------+     +----------------+------------------+
 | Ventilador | Cama jan  |     |  Apagar todo Luz dormitorio/Baño  |
 +------------+-----------+     +----------------+------------------+
-
-Events entrada:    0 - 1 - 2 - 3
-Events cama belen: 2 - 3 - 0 - 1
-Events cama jan:   1 - 0 - 3 - 2
