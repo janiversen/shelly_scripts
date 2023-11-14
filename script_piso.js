@@ -8,100 +8,112 @@ let location = 1;
 
 
 
-
-
-
-
-
-let cur_cycle = 0;
-function led_intensity(loc) {
-  let level = CONFIG.led_cycles[cur_cycle];
-  cur_cycle++;
-  if (cur_cycle >= CONFIG.led_cycles.length) {
-    cur_cycle = 0
-  }
-  let base0 = CONFIG.leds_ip[loc] + '/white/';
-  let cmd = "?turn=on&brightness=";
-
-  execute(base0, "0" + cmd + level[0]);
-  execute(base0, "1" + cmd + level[1]);
+function reserve() {
 };
-function ledPctSalon() {
-  led_intensity(0);
+
+
+function executeLight(inx) {
+  execute(light_ip[inx] + '/relay/0?turn=toggle');
 }
-function ledPctBedroom() {
-  led_intensity(1);
-}
-
-
-function ledSalon() {
-  let base0 = CONFIG.leds_ip[0] + '/white/';
-  let cmd = "?turn=toggle";
-  execute(base0, "0" + cmd);
-  execute(base0, "1" + cmd);
-
-}
-function ledBedroom() {
-  let base0 = CONFIG.leds_ip[1] + '/white/';
-  let cmd = "?turn=toggle";
-  execute(base0, "0" + cmd);
-  execute(base0, "1" + cmd);
-}
-
-
 
 function lightBed() {
-  let base0 = light_ip[1] + '/relay/0';
-  execute(base0, "?turn=toggle");
+  executeLight(1);
 }
 
 function lightRoof() {
-  let base0 = light_ip[0] + '/relay/0';
-  execute(base0, "?turn=toggle");
+  executeLight(0);
+}
+
+
+
+function executeLed(inx) {
+  let base0 = CONFIG.leds_ip[inx] + '/white/';
+  let cmd = "?turn=toggle";
+  execute(base0 + "0" + cmd);
+  execute(base0 + "1" + cmd);
+}
+
+function ledSalon() {
+  executeLed(0);
+}
+
+function ledBedroom() {
+  executeLed(1);
 }
 
 
 
 function blinds() {
-  let base0 = '/roller/0?go=';
+  let base0 = '/roller/0';
   Shelly.call(
     "http.get", {
-      url: CONFIG.base_ip + CONFIG.blinds_ip[0] + base0 + "stop"
+      url: CONFIG.base_ip + CONFIG.blinds_ip[0] + base0
     },
-    function (res, error_code, error_message, base0) {
-      if (res.code === 200) {
-        let st = JSON.parse(res.body);
-        if (st.current_pos > 60) {
-          let cmd = base0 + "to_pos&roller_pos=" + CONFIG.blinds_partial;
-          execute(CONFIG.blinds_ip[0], base0 + "close");
-          execute(CONFIG.blinds_ip[1], cmd);
-          execute(CONFIG.blinds_ip[2], cmd);
+    function (response) {
+      if (response.code === 200) {
+        let st = JSON.parse(response.body);
+        if (st.state == 'stop') {
+          st.state = st.last_direction
+        }
+        if (st.state === 'close') {
+          let cmd = base0 + '?go=open';
+          execute(CONFIG.blinds_ip[0] + cmd);
+          execute(CONFIG.blinds_ip[1] + cmd);
+          execute(CONFIG.blinds_ip[2] + cmd);
         } else {
-          let cmd = base0 + "open";
-          execute(CONFIG.blinds_ip[0], cmd);
-          execute(CONFIG.blinds_ip[1], cmd);
-          execute(CONFIG.blinds_ip[2], cmd);
+          let cmd = base0 + '?go=to_pos&roller_pos=';
+          execute(CONFIG.blinds_ip[0] + cmd + CONFIG.blinds_stop[0]);
+          execute(CONFIG.blinds_ip[1] + cmd + CONFIG.blinds_stop[1]);
+          execute(CONFIG.blinds_ip[2] + cmd + CONFIG.blinds_stop[2]);
         }
       }
-    },
-    base0
+    }
   );
 };
 
 
 
-function reserve() {
+let cur_cycle = 0;
+let led_cycles = [["40", "50"], ["100", "100"], ["1", "20"]];
+
+function led_intensity(loc) {
+  let level = led_cycles[cur_cycle];
+  cur_cycle++;
+  if (cur_cycle >= led_cycles.length) {
+    cur_cycle = 0
+  }
+  let base0 = CONFIG.leds_ip[loc] + '/white/';
+  let cmd = "?turn=on&brightness=";
+
+  execute(base0 + "0" + cmd + level[0]);
+  execute(base0 + "1" + cmd + level[1]);
 };
+
+function ledPctSalon() {
+  led_intensity(0);
+}
+
+function ledPctBedroom() {
+  led_intensity(1);
+}
+
+
+
+
+
+
+
+
 
 
 function long_push_cancel() {
   long_push_active = 0;
 }
 
-function execute(ip, command) {
+function execute(command) {
   Shelly.call(
       "http.get", {
-          url: CONFIG.base_ip + ip + command
+          url: CONFIG.base_ip + command
       },
       function (response, error_code, error_message, ud) {
 
@@ -150,5 +162,4 @@ let CONFIG = {
   ],
 
   blinds_stop: ["0", "40", "0"],
-  led_cycles: [["40", "50"], ["100", "100"], ["1", "20"]],
 };
