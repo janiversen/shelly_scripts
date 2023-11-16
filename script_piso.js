@@ -52,7 +52,7 @@ function blinds() {
     function (response) {
       if (response.code === 200) {
         let st = JSON.parse(response.body);
-        if (st.state == 'stop') {
+        if (st.state === 'stop') {
           st.state = st.last_direction
         }
         if (st.state === 'close') {
@@ -72,43 +72,81 @@ function blinds() {
 };
 
 
+//  let base0 = CONFIG.leds_ip[loc] + '/white/';
+//  let cmd = "?turn=on&brightness=";
+//  execute(base0 + "0" + cmd + level[0]);
+//  execute(base0 + "1" + cmd + level[1]);
 
-let cur_cycle = 0;
-let led_cycles = [["40", "50"], ["100", "100"], ["1", "20"]];
 
-function led_intensity(loc) {
-  let level = led_cycles[cur_cycle];
-  cur_cycle++;
-  if (cur_cycle >= led_cycles.length) {
-    cur_cycle = 0
+function led_regulate_intensity(loc, direction, brightness) {
+  print("JAN --> " + brightness[0] + " -- " + brightness[1]);
+  if (direction > 0) {
+    brightness[0] += 10
+    if (brightness[0] > 100) {
+      brightness[1] += 10
+      brightness[0] = 0
+      if (brightness[1] > 100) {
+        direction = -1
+        brightness[0] = 100
+        brightness[1] = 90
+      }
+    }
   }
-  let base0 = CONFIG.leds_ip[loc] + '/white/';
-  let cmd = "?turn=on&brightness=";
+  else {
+    brightness[0] -= 10
+    if (brightness[0] < 0) {
+      brightness[1] -= 10
+      brightness[0] = 100
+      if (brightness[1] < 0) {
+        direction = 1
+        brightness[0] = 0
+        brightness[1] = 0
+      }
+    }
+  }
+  print("JAN set --> " + brightness[0] + " -- " + brightness[1]);
+}
 
-  execute(base0 + "0" + cmd + level[0]);
-  execute(base0 + "1" + cmd + level[1]);
+let pushTimer = null;
+let led_direction = 1;
+let led_brightness = [0, 0]
+
+function led_intensity(loc, chan) {
+  Shelly.call(
+    "http.get", {
+      url: CONFIG.base_ip + CONFIG.leds_ip[loc] + '/white/' + chan
+    },
+    function (response) {
+      if (response.code === 200) {
+        let st = JSON.parse(response.body);
+        led_brightness[chan] = st.brightness
+      }
+      if (chan === 0) led_intensity(loc, 1)
+      else {
+        Timer.set(
+          CONFIG.timer_step,
+          true,
+          function (loc) {
+            print("JAN --> Timer ")
+            print("JAN direction " + led_direction)
+            print("JAN brightness 0 -> " + led_brightness[0] + "    1 -> " + led_brightness[0])
+            led_direction += 1;
+          }
+        )
+      }
+    }
+  );
 };
 
 function ledPctSalon() {
-  led_intensity(0);
+  led_intensity(0, 0);
 }
 
 function ledPctBedroom() {
-  led_intensity(1);
+  led_intensity(1, 0);
 }
 
 
-
-
-
-
-
-
-
-
-function long_push_cancel() {
-  long_push_active = 0;
-}
 
 function execute(command) {
   Shelly.call(
@@ -122,13 +160,11 @@ function execute(command) {
   );
 };
 
-let long_push_active = 0;
-
 Shelly.addEventHandler(
   function (event, user_data) {
     if (event.info.event === "single_push") CONFIG.action_push[location][event.id]();
     if (event.info.event === "long_push") CONFIG.action_long_push[location][event.id]();
-    if (event.info.event === "btn_up" && long_push_active !== 0) long_push_cancel();
+    if (event.info.event === "btn_up") Timer.clear(pushTimer);
   },
 );
 
@@ -138,6 +174,8 @@ let CONFIG = {
   blinds_ip: ["115", "113", "105"],
   leds_ip: ["117", "107"],
   light_ip: ["104", "108"],
+
+  timer_step: 500,
 
   // Keypad <-> Event id:
   // +---+---+
@@ -161,5 +199,5 @@ let CONFIG = {
     [reserve,       reserve, ledPctBedroom, reserve],        // Left -> Right
   ],
 
-  blinds_stop: ["0", "40", "0"],
+  blinds_stop: ["0", "40", "20"],
 };
