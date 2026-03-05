@@ -7,6 +7,7 @@ function set_blindsBajo() {
 
 function set_blindsEncima() {
   set_blinds(CONFIG.encima, CONFIG.encima.state)
+  CONFIG.encima.state = !CONFIG.encima.state;
   return true
 }
 
