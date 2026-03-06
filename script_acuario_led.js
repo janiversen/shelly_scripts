@@ -19,7 +19,7 @@ function led_on() {
 function led_off() {
     Shelly.call("Light.set", { id: 1, on: false });
     cancel_timer = Timer.set(
-        2 * 60 * 1000,
+        5 * 60 * 1000,
         false,
         led_off2       
     )
@@ -28,7 +28,17 @@ function led_off() {
 function led_off2() {
     Shelly.call("Light.set", { id: 3, on: false });
     cancel_timer = Timer.set(
-        50 * 60 * 1000,
+        30 * 60 * 1000,
+        false,
+        led_off3        
+    )
+}
+
+
+function led_off3() {
+    Shelly.call("Light.set", { id: 2, on: false });
+    cancel_timer = Timer.set(
+        30 * 60 * 1000,
         false,
         led_off_night        
     )
@@ -36,5 +46,4 @@ function led_off2() {
 
 function led_off_night() {
     Shelly.call("Light.set", { id: 0, on: false });
-    Shelly.call("Light.set", { id: 2, on: false });
 }
